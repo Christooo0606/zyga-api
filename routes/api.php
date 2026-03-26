@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\V1\Client\ClientPaymentController;
 use App\Http\Controllers\Api\V1\Client\ClientServiceRequestController;
 use App\Http\Controllers\Api\V1\Provider\ProviderProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Models\VehicleType; // 👈 Agrega esta línea
+
 
 
 Route::prefix('v1')->group(function () {
@@ -25,10 +27,25 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
+
+         Route::get('/google', [SocialAuthController::class, 'redirectToGoogle']);
+        Route::get('/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
     });
 
     Route::get('/services', [ServiceController::class, 'index']);
     //Route::get('/service-areas', [ServiceAreaController::class, 'index']);
+
+    // 👇 AGREGAR ESTA RUTA PARA TIPOS DE VEHÍCULOS
+    Route::get('/vehicle-types', function() {
+        $types = VehicleType::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name']);
+        
+        return response()->json([
+            'message' => 'Tipos de vehículos obtenidos correctamente.',
+            'data' => $types,
+        ]);
+    });
 
     /*
     |--------------------------------------------------------------------------
