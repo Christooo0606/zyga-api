@@ -29,6 +29,8 @@ use App\Http\Controllers\Api\V1\Provider\ProviderProfileController;
 use App\Http\Controllers\Api\V1\Provider\ProviderReviewController;
 use App\Http\Controllers\Api\V1\Provider\ProviderScheduleController;
 use App\Http\Controllers\Api\V1\Provider\ProviderServiceController;
+use App\Http\Controllers\Api\V1\Auth\SocialAuthController;
+use App\Models\VehicleType;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -37,11 +39,20 @@ Route::prefix('v1')->group(function () {
     | Public routes
     |--------------------------------------------------------------------------
     */
+
+    // Rutas Auth Normales
     Route::prefix('auth')->controller(AuthController::class)->group(function () {
         Route::post('/register', 'register');
         Route::post('/login', 'login');
     });
 
+    // Rutas Google Auth
+    Route::prefix('auth/google')->group(function () {
+        Route::get('/', [SocialAuthController::class, 'redirectToGoogle']);
+        Route::get('/callback', [SocialAuthController::class, 'handleGoogleCallback']);
+    });
+
+    // Rutas Públicas Comunes
     Route::get('/services', [ServiceController::class, 'index']);
 
     Route::prefix('subscription-plans')->controller(SubscriptionPlanController::class)->group(function () {
@@ -52,6 +63,18 @@ Route::prefix('v1')->group(function () {
     Route::prefix('payment-method-types')->controller(PaymentMethodTypeController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('/{id}', 'show');
+    });
+
+    // Ruta Vehículos (Pública)
+    Route::get('/vehicle-types', function() {
+        $types = VehicleType::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name']);
+
+        return response()->json([
+            'message' => 'Tipos de vehículos obtenidos correctamente.',
+            'data' => $types,
+        ]);
     });
 
     /*
@@ -106,7 +129,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/{id}', 'show');
                 Route::put('/{id}', 'update');
                 Route::patch('/{id}', 'update');
-                Route::delete('/{id}', 'destroy');
+                Route::delete('/{id}', 'delete');
             });
 
             Route::prefix('addresses')->controller(ClientAddressController::class)->group(function () {
